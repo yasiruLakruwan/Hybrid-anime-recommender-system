@@ -2,7 +2,7 @@
 import yaml
 import os
 from src.custom_exception import CustomExeption
-from src.logging import get_logger
+from src.logger import get_logger
 import pandas as pd
 
 logger = get_logger(__name__)
