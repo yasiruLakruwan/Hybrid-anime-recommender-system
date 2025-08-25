@@ -27,4 +27,98 @@ class ModelTraining:
         except Exception as e:
             logger.error("Error while loading the data......")
             raise CustomExeption("Error while loading the data......",e)
+    
+    def train_model(self):
+        try:
+            X_train_array,X_test_array,y_train,y_test = self.load_data()
+
+            n_users = len(joblib.load(USER2USER_ENCODED))
+            n_anime = len(joblib.load(ANIME2ANIME_ENCODED))
+
+            base_model = BaseModel(config_path=CONFIG_FILE)
+
+            model = base_model.RecommenderNet(n_users=n_users,n_anime=n_anime)
+
+            start_lr = 0.00001
+            min_lr = 0.0001
+            max_lr = 0.00005
+            batch_size = 10000
+
+            ramup_epochs = 5
+            sustain_epochs = 0
+            exp_decay = 0.8
+
+            def lrfn(epoch):
+                if epoch<ramup_epochs:
+                    return (max_lr-start_lr)/ramup_epochs*epoch + start_lr
+                elif epoch<ramup_epochs+sustain_epochs:
+                    return max_lr
+                else:
+                    return (max_lr-min_lr) * exp_decay ** (epoch-ramup_epochs-sustain_epochs)+min_lr
+            
+            lr_callback = LearningRateScheduler(lambda epoch:lrfn(epoch) , verbose=0)
+
+            model_checkpoint = ModelCheckpoint(filepath=CHECKPOINT_FILR_PATH,save_weights_only=True,monitor="val_loss",mode="min",save_best_only=True)
+
+            early_stopping = EarlyStopping(patience=3,monitor="val_loss",mode="min",restore_best_weights=True)
+
+            my_callbacks = [model_checkpoint,lr_callback,early_stopping]
+
+
+            os.makedirs(os.path.dirname(CHECKPOINT_FILR_PATH),exist_ok=True)
+            os.makedirs(MODEL_DIR,exist_ok=True)
+            os.makedirs(WEIGHT_DIR,exist_ok=True)
+
+            try:
+                history = model.fit(
+                                x=X_train_array,
+                                y=y_train,
+                                batch_size=batch_size,
+                                epochs=5,
+                                verbose=1,
+                                validation_data = (X_test_array,y_test),
+                                callbacks=my_callbacks
+                            )
+                model.load_weights(CHECKPOINT_FILR_PATH)
+                logger.info("Model training completed.........")
+
+            except Exception as e:
+                raise CustomExeption("Error while training the model..........",e)
+            
+            self.save_model_weights(model)
+
+        except Exception as e:
+            logger.error(str(e))
+            raise CustomExeption("Error while doing the model training process....",e)
+    
+    def extract_weights(self,layer_name,model):
+        try:
+            weight_layer = model.get_layer(layer_name)
+            weights = weight_layer.get_weights()[0]
+            weights = weights/np.linalg.norm(weights,axis=1).reshape((-1,1))
+            logger.info(f"Extracted weight for {layer_name}")
+            return weights
+        except Exception as e:
+            logger.error(str(e))
+            raise CustomExeption("Error while doing the weight extraction....",e)
+    
+    def save_model_weights(self,model):
+        try:
+            model.save(MODEL_PATH)
+            logger.info(f"Model save to {MODEL_PATH}")
+
+            user_weights = self.extract_weights("user_embedding",model)
+            anime_weights = self.extract_weights("anime_embedding",model)
+
+            joblib.dump(user_weights,USER_WEIGHTS_PATH)
+            joblib.dump(anime_weights,ANIME_WEIGHT_PATH)
+
+            logger.info("User and anime weights saved successfully.....")
+
+        except Exception as e:
+            logger.error(str(e))
+            raise CustomExeption("Error during saving model and weights....",e)
         
+if __name__=="__main__":
+    model_triner = ModelTraining(PROCESSED_DIR)
+    model_triner.train_model()
