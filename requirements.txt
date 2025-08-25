@@ -6,4 +6,6 @@ pyyaml
 tensorflow
 matplotlib
 wordcloud
-ipykernal
+ipykernel
+joblib
+scikit-learn
