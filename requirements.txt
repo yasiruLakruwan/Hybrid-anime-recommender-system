@@ -9,3 +9,5 @@ wordcloud
 ipykernel
 joblib
 scikit-learn
+comet-ml 
+
