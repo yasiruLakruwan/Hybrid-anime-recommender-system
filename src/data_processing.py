@@ -119,7 +119,7 @@ class DataProcessor:
             joblib.dump(self.X_train_array,X_TRAIN_ARRAY)
             joblib.dump(self.X_test_array,X_TEST_ARRAY)
             joblib.dump(self.y_train,Y_TRAIN)
-            joblib.dump(self.y_test,Y_TRAIN)
+            joblib.dump(self.y_test,Y_TEST)
 
             self.rating_df.to_csv(RATING_DF,index=False)
 
