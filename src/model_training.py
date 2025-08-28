@@ -1,4 +1,5 @@
 import joblib
+import comet_ml
 import numpy as np
 import os
 from tensorflow.keras.callbacks import ModelCheckpoint,LearningRateScheduler,TensorBoard,EarlyStopping
@@ -12,6 +13,11 @@ logger = get_logger(__name__)
 class ModelTraining:
     def __init__(self,data_path):
         self.data_path = data_path
+        self.experiment = comet_ml.Experiment(
+            api_key="LCymxLfJAwFjlJSBoVCiEQfsk",
+            project_name="anime-recomondation",
+            workspace="yasirulakruwan"
+        )
         logger.info("Model training initialized..........")
 
     def load_data(self):
@@ -82,6 +88,13 @@ class ModelTraining:
                 model.load_weights(CHECKPOINT_FILR_PATH)
                 logger.info("Model training completed.........")
 
+                for epoch in range(len(history.history["loss"])):
+                    train_loss = history.history["loss"][epoch]
+                    val_loss = history.history["val_loss"][epoch]
+
+                    self.experiment.log_metric('train_loss',train_loss,step=epoch)
+                    self.experiment.log_metric('val_loss',val_loss,step=epoch)
+
             except Exception as e:
                 raise CustomExeption("Error while training the model..........",e)
             
@@ -112,6 +125,10 @@ class ModelTraining:
 
             joblib.dump(user_weights,USER_WEIGHTS_PATH)
             joblib.dump(anime_weights,ANIME_WEIGHT_PATH)
+
+            self.experiment.log_asset(MODEL_PATH)
+            self.experiment.log_asset(ANIME_WEIGHT_PATH)
+            self.experiment.log_asset(USER_WEIGHTS_PATH)
 
             logger.info("User and anime weights saved successfully.....")
 
