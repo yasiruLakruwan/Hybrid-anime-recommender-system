@@ -10,3 +10,5 @@ model:
   loss: binary_crossentropy
   optimizer: Adam
   metrics: ["mae","mse"]
+
+  
