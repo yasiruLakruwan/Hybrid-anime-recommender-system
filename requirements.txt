@@ -10,4 +10,4 @@ ipykernel
 joblib
 scikit-learn
 comet-ml 
-
+dvc 

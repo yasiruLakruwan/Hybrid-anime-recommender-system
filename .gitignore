@@ -143,6 +143,11 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+artifacts/raw/
+artifacts/model/
+artifacts/processed/
+artifacts/weights/
+artifacts/model_checkpoint/
 
 # Spyder project settings
 .spyderproject
