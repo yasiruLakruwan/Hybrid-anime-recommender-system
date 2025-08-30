@@ -7,8 +7,8 @@ def hybrid_recommendation(user_id , user_weight=0.5, content_weight =0.5):
     ## User Recommndation
 
     similar_users =find_similar_users(user_id,USER_WEIGHTS_PATH,USER2USER_ENCODED,USER2USER_DECODED)
-    user_pref = get_user_preferences(user_id , rating_df, df)
-    user_recommended_animes =get_user_recommendations(similar_users,user_pref,df, synopsis_df,rating_df)
+    user_pref = get_user_preferences(user_id , RATING_DF, DF)
+    user_recommended_animes =get_user_recommendations(similar_users,user_pref,DF, SYNOPSIS_DF,RATING_DF)
     
 
     user_recommended_anime_list = user_recommended_animes["anime_name"].tolist()
@@ -18,7 +18,7 @@ def hybrid_recommendation(user_id , user_weight=0.5, content_weight =0.5):
     content_recommended_animes = []
 
     for anime in user_recommended_anime_list:
-        similar_animes = find_similar_animes(anime, anime_weights, anime2anime_encoded, anime2anime_decoded, df, synopsis_df)
+        similar_animes = find_similar_animes(anime, ANIME_WEIGHT_PATH, ANIME2ANIME_ENCODED, ANIME2ANIME_DECODED, DF, SYNOPSIS_DF)
 
         if similar_animes is not None and not similar_animes.empty:
             content_recommended_animes.extend(similar_animes["name"].tolist())
