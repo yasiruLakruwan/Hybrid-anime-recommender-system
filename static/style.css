@@ -1,0 +1,89 @@
+/* General styles */
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    color: #f1f1f1;
+    margin: 0;
+    padding: 0;
+    display: flex;     
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Container */
+.form-container {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    width: 400px;
+    text-align: center;
+}
+
+/* Title */
+.form-container h1 {
+    font-size: 1.6rem;
+    margin-bottom: 20px;
+    color: #ffcc00;
+}
+
+/* Labels */
+label {
+    font-size: 1rem;
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* Input */
+input[type="number"] {
+    padding: 10px;
+    width: 90%;
+    border: none;
+    border-radius: 6px;
+    outline: none;
+    margin-bottom: 15px;
+    font-size: 1rem;
+}
+
+/* Button */
+button {
+    background: #ffcc00;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+button:hover {
+    background: #ffaa00;
+}
+
+/* Results Section */
+.results-container {
+    margin-top: 25px;
+    text-align: left;
+}
+
+.results-container h2 {
+    font-size: 1.3rem;
+    color: #00ffcc;
+    margin-bottom: 10px;
+}
+
+/* List */
+.results-container ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.results-container li {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 1rem;
+}

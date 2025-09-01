@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/static/style.css">
+  <title>Anime recomander application.......</title>
+  
+</head>
+<body>
+    <div class="form-container">
+        <h1>Welcome to the anime recomender system</h1>
+        <form action="/" method="POST">
+            <label for="UserID">Enter the user id: </label>
+            <input type="number" id="UserID" name="UserID" required>
+            <button type="submit">Get Recormendation</button>
+        </form>
+        {%  if recomandations %}
+        <div class="results-container">
+            <h2>Your anime Recormandations are :---</h2>
+            <ul>
+                {% for anime in recomandations %}
+                <li>{{ anime }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

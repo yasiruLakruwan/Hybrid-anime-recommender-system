@@ -3,7 +3,7 @@ import numpy as np
 import joblib
 from config.path_config import *
 
-############ 1. GET ANIME FRAME
+############# 1. GET_ANIME_FRAME
 
 def getAnimeFrame(anime,path_df):
     df = pd.read_csv(path_df)
@@ -11,8 +11,9 @@ def getAnimeFrame(anime,path_df):
         return df[df.anime_id == anime]
     if isinstance(anime,str):
         return df[df.eng_version == anime]
+    
 
-############ 2. GRT SYNOPSIS
+########## 2. GET_SYNOPSIS
 
 def getSynopsis(anime,path_synopsis_df):
     synopsis_df = pd.read_csv(path_synopsis_df)
@@ -20,26 +21,25 @@ def getSynopsis(anime,path_synopsis_df):
         return synopsis_df[synopsis_df.MAL_ID == anime].sypnopsis.values[0]
     if isinstance(anime,str):
         return synopsis_df[synopsis_df.Name == anime].sypnopsis.values[0]
-    
-########### 3. CONTENT RECOMONDATION
 
-def find_similar_animes(name, path_anime_weights, path_anime2anime_encoded, path_anime2anime_decoded, anime_path_df, path_synopsis_df, n=10, return_dist=False, neg=False):
-    # Get the anime_id for the given name
 
+########## 3. CONTENT RECOMMENDATION
+
+def find_similar_animes(name, path_anime_weights, path_anime2anime_encoded, path_anime2anime_decoded, path_anime_df, n=10, return_dist=False, neg=False):
+    # Load weights and encoded-decoded mappings
     anime_weights = joblib.load(path_anime_weights)
     anime2anime_encoded = joblib.load(path_anime2anime_encoded)
     anime2anime_decoded = joblib.load(path_anime2anime_decoded)
-    synopsis_df = pd.read_csv(path_synopsis_df)
 
-    index = getAnimeFrame(name, anime_path_df).anime_id.values[0]
+    # Get the anime ID for the given name
+    index = getAnimeFrame(name, path_anime_df).anime_id.values[0]
     encoded_index = anime2anime_encoded.get(index)
 
     if encoded_index is None:
         raise ValueError(f"Encoded index not found for anime ID: {index}")
 
+    # Compute similarity distances
     weights = anime_weights
-
-    # Compute the similarity distances
     dists = np.dot(weights, weights[encoded_index])  # Ensure weights[encoded_index] is a 1D array
     sorted_dists = np.argsort(dists)
 
@@ -59,15 +59,12 @@ def find_similar_animes(name, path_anime_weights, path_anime2anime_encoded, path
     SimilarityArr = []
     for close in closest:
         decoded_id = anime2anime_decoded.get(close)
-       
 
-       
-        anime_frame = getAnimeFrame(decoded_id, df)
+        anime_frame = getAnimeFrame(decoded_id, path_anime_df)
 
         anime_name = anime_frame.eng_version.values[0]
         genre = anime_frame.Genres.values[0]
         similarity = dists[close]
-   
 
         SimilarityArr.append({
             "anime_id": decoded_id,
@@ -75,20 +72,22 @@ def find_similar_animes(name, path_anime_weights, path_anime2anime_encoded, path
             "similarity": similarity,
             "genre": genre,
         })
-       
 
     # Create a DataFrame with results and sort by similarity
     Frame = pd.DataFrame(SimilarityArr).sort_values(by="similarity", ascending=False)
     return Frame[Frame.anime_id != index].drop(['anime_id'], axis=1)
 
-################ 4. FIND SIMILER USERS
+
+######## 4. FIND_SIMILAR_USERS
+
 
 def find_similar_users(item_input , path_user_weights , path_user2user_encoded , path_user2user_decoded, n=10 , return_dist=False,neg=False):
-
-    user_weights = joblib.load(path_user_weights)
-    user2user_encoded = joblib.load(path_user2user_encoded)
-    user2user_decoded = joblib.load(path_user2user_decoded)
     try:
+
+        user_weights = joblib.load(path_user_weights)
+        user2user_encoded = joblib.load(path_user2user_encoded)
+        user2user_decoded = joblib.load(path_user2user_decoded)
+
         index=item_input
         encoded_index = user2user_encoded.get(index)
 
@@ -125,37 +124,40 @@ def find_similar_users(item_input , path_user_weights , path_user2user_encoded ,
     except Exception as e:
         print("Error Occured",e)
 
-        
-########### 5. GET USER PREFERENCE
+
+################## 5. GET USER PREF
 
 def get_user_preferences(user_id , path_rating_df , path_anime_df ):
-
     rating_df = pd.read_csv(path_rating_df)
     df = pd.read_csv(path_anime_df)
 
     animes_watched_by_user = rating_df[rating_df.user_id == user_id]
 
-    user_rating_percentile = np.percentile(animes_watched_by_user.rating , 75)
+    # Handle case: no ratings for this user
+    if animes_watched_by_user.empty:
+        return pd.DataFrame(columns=["eng_version", "Genres"])
 
-    animes_watched_by_user = animes_watched_by_user[animes_watched_by_user.rating >= user_rating_percentile]
-
-    top_animes_user = (
-        animes_watched_by_user.sort_values(by="rating" , ascending=False).anime_id.values
-    )
+    # Handle case: only one rating (percentile won't work properly)
+    if len(animes_watched_by_user) == 1:
+        top_animes_user = animes_watched_by_user.anime_id.values
+    else:
+        user_rating_percentile = np.percentile(animes_watched_by_user.rating, 75)
+        animes_watched_by_user = animes_watched_by_user[
+            animes_watched_by_user.rating >= user_rating_percentile
+        ]
+        top_animes_user = animes_watched_by_user.sort_values(
+            by="rating", ascending=False
+        ).anime_id.values
 
     anime_df_rows = df[df["anime_id"].isin(top_animes_user)]
-    anime_df_rows = anime_df_rows[["eng_version","Genres"]]
+    return anime_df_rows[["eng_version", "Genres"]]
 
 
-    return anime_df_rows
+######## 6. USER RECOMMENDATION
 
-########## 6. USER REMONDATION
 
-def get_user_recommendations(similar_users , user_pref ,path_anime_df , path_synopsis_df, path_rating_df, n=10):
+def     get_user_recommendations(similar_users , user_pref ,path_anime_df , path_synopsis_df, path_rating_df, n=10):
 
-    df = pd.read_csv(path_anime_df)
-    synopsis_df = pd.read_csv(path_synopsis_df)
-    rating_df = pd.read_csv(path_rating_df)
 
     recommended_animes = []
     anime_list = []
@@ -177,7 +179,9 @@ def get_user_recommendations(similar_users , user_pref ,path_anime_df , path_syn
                 n_user_pref = sorted_list[sorted_list.index == anime_name].values[0][0]
 
                 if isinstance(anime_name,str):
-                    frame = getAnimeFrame(anime_name,df)
+                    frame = getAnimeFrame(anime_name,path_anime_df)
+                    if frame.empty:
+                        continue
                     anime_id = frame.anime_id.values[0]
                     genre = frame.Genres.values[0]
                     synopsis = getSynopsis(int(anime_id),path_synopsis_df)
@@ -188,9 +192,5 @@ def get_user_recommendations(similar_users , user_pref ,path_anime_df , path_syn
                         "Genres" : genre,
                         "Synopsis": synopsis
                     })
-    return pd.DataFrame(recommended_animes).head(n)
+    return pd.DataFrame(recommended_animes or [], columns=["n", "anime_name", "Genres", "Synopsis"]).head(n)
             
-
-
-
-    
