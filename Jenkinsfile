@@ -29,6 +29,18 @@ pipeline {
             }
         }
 
-        
+        stage("DVC pull...."){
+            steps{
+                withCredentials([file(credentialsId: 'gcp-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]){
+                    script{
+                        echo 'DVC pull.....'
+                        sh'''
+                        . ${VENV_DIR}/bin/activate
+                        dvc pull
+                        '''
+                    }
+                }
+            }
+        }
     }
 }
